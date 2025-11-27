@@ -1,0 +1,39 @@
+# Ignore nested FINAL-PROJECT directory (if it contains its own git or is not to be tracked)
+FINAL-PROJECT/
+
+# Virtual environment
+venv/
+.venv/
+env/
+ENV/
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Django
+db.sqlite3
+media/
+staticfiles/
+
+# Env files / secrets
+.env
+.env.* 
+secrets.json
+
+# Editors / OS
+.vscode/
+.idea/
+*.sublime-workspace
+*.sublime-project
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
+
+# Node / frontend (if present)
+node_modules/
+dist/
+build/
