@@ -15,6 +15,16 @@ class CreateQuizView(generics.CreateAPIView):
         from .serializers import QuizSerializer
         return QuizSerializer
 
+    def perform_create(self, serializer):
+        # save quiz
+        quiz = serializer.save()
+        # create notification (lazy lookup to avoid circular imports)
+        Notification = apps.get_model('notifications', 'Notification')
+        Notification.objects.create(
+            user=quiz.course.instructor,
+            message=f"New quiz '{quiz.title}' added to {quiz.course.title}"
+        )
+
 
 # Instructor: add questions to quiz
 class AddQuestionView(generics.CreateAPIView):
@@ -24,6 +34,7 @@ class AddQuestionView(generics.CreateAPIView):
         Quiz = apps.get_model('quizes', 'Quiz')
         Question = apps.get_model('quizes', 'Question')
         Choice = apps.get_model('quizes', 'Choice')
+        Notification = apps.get_model('notifications', 'Notification')
 
         try:
             quiz = Quiz.objects.get(id=quiz_id)
@@ -46,6 +57,17 @@ class AddQuestionView(generics.CreateAPIView):
                 is_correct=bool(choice.get("is_correct", False))
             )
 
+        # notify enrolled students about new question
+        enrollments = quiz.course.enrolled_students.all()
+        for enr in enrollments:
+            try:
+                Notification.objects.create(
+                    user=enr.student,
+                    message=f"New question added to quiz '{quiz.title}' in {quiz.course.title}"
+                )
+            except Exception:
+                pass
+
         return Response({"message": "Question added"}, status=status.HTTP_201_CREATED)
 
 
@@ -59,6 +81,7 @@ class TakeQuizView(generics.CreateAPIView):
         Choice = apps.get_model('quizes', 'Choice')
         QuizAttempt = apps.get_model('quizes', 'QuizAttempt')
         SelectedAnswer = apps.get_model('quizes', 'SelectedAnswer')
+        Notification = apps.get_model('notifications', 'Notification')
 
         try:
             quiz = Quiz.objects.get(id=quiz_id)
@@ -94,6 +117,15 @@ class TakeQuizView(generics.CreateAPIView):
 
         attempt.score = score
         attempt.save()
+
+        # notify instructor about submission (non-blocking)
+        try:
+            Notification.objects.create(
+                user=quiz.course.instructor,
+                message=f"{request.user.username} submitted quiz '{quiz.title}' and scored {score}/{quiz.questions.count()}"
+            )
+        except Exception:
+            pass
 
         return Response({
             "message": "Quiz submitted",
