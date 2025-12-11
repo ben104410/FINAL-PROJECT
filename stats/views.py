@@ -45,7 +45,7 @@ INSTALLED_APPS = [
 
 # Dynamically add local apps only if their packages exist to avoid startup import errors
 import importlib.util
-LOCAL_APPS = ['users', 'courses', 'quizzes', 'analytics', 'notifications', 'comments', 'search', 'stats', 'admin_dashboard']
+LOCAL_APPS = ['users', 'courses', 'quizzes', 'analytics', 'notifications', 'comments', 'search', 'stats']
 for app in LOCAL_APPS:
     if importlib.util.find_spec(app) is not None:
         INSTALLED_APPS.append(app)

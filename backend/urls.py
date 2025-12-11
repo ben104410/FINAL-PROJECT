@@ -24,4 +24,8 @@ urlpatterns = [
     path('api/quizes/', include('quizes.urls')),
     path('api/analytics/', include('analytics.urls')),
     path('api/notifications/', include('notifications.urls')),
+    path('api/comments/', include('comments.urls')),
+    path('api/search/', include('search.urls')),
+    path('api/stats/', include('stats.urls')),
+    path('api/admin-dashboard/', include('admin_dashboard.urls')),
 ]
