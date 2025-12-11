@@ -4,6 +4,7 @@ try:
     from .models import Course, CourseContent, Enrollment
     from .serializers import CourseSerializer, CourseContentSerializer, EnrollmentSerializer
     from django.apps import apps
+    from activity_logs.utils import log_activity
 except Exception as e:
     # Re-raise with clearer context so import problems show up during Django startup
     raise ImportError(f"Failed to import courses.views dependencies: {e}") from e
@@ -30,8 +31,9 @@ class CourseListCreateView(generics.ListCreateAPIView):
                 message=f"Your course '{course.title}' has been created"
             )
         except Exception:
-            # don't block course creation if notification fails
             pass
+        # log activity
+        log_activity(self.request.user, 'course_created', f"Created course '{course.title}'")
 
 
 class CourseDetailView(generics.RetrieveAPIView):
@@ -44,6 +46,12 @@ class CourseDetailView(generics.RetrieveAPIView):
     def get_serializer_class(self):
         from .serializers import CourseSerializer
         return CourseSerializer
+
+    def retrieve(self, request, *args, **kwargs):
+        course = self.get_object()
+        if request.user and request.user.is_authenticated:
+            log_activity(request.user, 'course_view', f"Viewed course {course.title}")
+        return super().retrieve(request, *args, **kwargs)
 
 
 class UploadContentView(generics.CreateAPIView):
@@ -68,6 +76,9 @@ class UploadContentView(generics.CreateAPIView):
                 # keep it resilient; don't block upload if notification fails
                 pass
 
+        # log activity
+        log_activity(self.request.user, 'content_upload', f"Uploaded content '{content.title}' to {course.title}")
+
 
 class EnrollCourseView(generics.CreateAPIView):
     serializer_class = EnrollmentSerializer
@@ -87,3 +98,5 @@ class EnrollCourseView(generics.CreateAPIView):
         except Exception:
             # don't block enrollment if notification creation fails
             pass
+        # log activity
+        log_activity(self.request.user, 'enroll', f"Enrolled in course {course.title}")

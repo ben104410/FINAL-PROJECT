@@ -45,7 +45,7 @@ INSTALLED_APPS = [
 
 # Dynamically add local apps only if their packages exist to avoid startup import errors
 import importlib.util
-LOCAL_APPS = ['users', 'courses', 'quizzes', 'analytics', 'notifications', 'comments', 'search', 'stats']
+LOCAL_APPS = ['users', 'courses', 'quizzes', 'analytics', 'notifications', 'comments', 'search', 'stats', 'admin_dashboard', 'bookmarks', 'activity_logs']
 for app in LOCAL_APPS:
     if importlib.util.find_spec(app) is not None:
         INSTALLED_APPS.append(app)
@@ -151,69 +151,3 @@ REST_FRAMEWORK = {
         'rest_framework_simplejwt.authentication.JWTAuthentication',
     ),
 }
-from rest_framework.permissions import IsAuthenticated
-from rest_framework.views import APIView
-from rest_framework.response import Response
-from django.apps import apps
-from django.db import models
-
-class InstructorStatsView(APIView):
-    permission_classes = [IsAuthenticated]
-
-    def get(self, request):
-        Course = apps.get_model('courses', 'Course')
-        Enrollment = apps.get_model('courses', 'Enrollment')
-        Quiz = apps.get_model('quizes', 'Quiz')
-        QuizAttempt = apps.get_model('quizes', 'QuizAttempt')
-
-        instructor = request.user
-
-        # Ensure only instructors can access
-        if instructor.role != "instructor":
-            return Response({"error": "Only instructors can view stats"}, status=403)
-
-        # 1. Courses created by this instructor
-        courses = Course.objects.filter(instructor=instructor)
-        total_courses = courses.count()
-
-        # 2. Total enrollments in their courses
-        total_students = Enrollment.objects.filter(course__instructor=instructor).count()
-
-        # 3. Total quizzes created
-        quizzes = Quiz.objects.filter(course__instructor=instructor)
-        total_quizzes = quizzes.count()
-
-        # 4. Average quiz score (overall)
-        attempts = QuizAttempt.objects.filter(quiz__course__instructor=instructor)
-        avg_score = attempts.aggregate(models.Avg("score"))["score__avg"]
-        avg_score = round(avg_score, 2) if avg_score else 0
-
-        # 5. Most popular course
-        popularity_data = []
-        for c in courses:
-            count = Enrollment.objects.filter(course=c).count()
-            popularity_data.append({"course": c.title, "enrollments": count})
-
-        most_popular_course = None
-        if popularity_data:
-            most_popular_course = max(popularity_data, key=lambda x: x["enrollments"])
-
-        # 6. Course enrollment breakdown
-        course_breakdown = [
-            {
-                "course": c.title,
-                "students": Enrollment.objects.filter(course=c).count()
-            }
-            for c in courses
-        ]
-
-        data = {
-            "total_courses": total_courses,
-            "total_students": total_students,
-            "total_quizzes": total_quizzes,
-            "average_quiz_score": avg_score,
-            "most_popular_course": most_popular_course,
-            "course_enrollment_breakdown": course_breakdown
-        }
-
-        return Response(data, status=200)

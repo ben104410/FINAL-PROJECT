@@ -45,7 +45,7 @@ INSTALLED_APPS = [
 
 # Dynamically add local apps only if their packages exist to avoid startup import errors
 import importlib.util
-LOCAL_APPS = ['users', 'courses', 'quizzes', 'analytics', 'notifications', 'comments', 'search', 'stats', 'admin_dashboard']
+LOCAL_APPS = ['users', 'courses', 'quizzes', 'analytics', 'notifications', 'comments', 'search', 'stats', 'admin_dashboard', 'bookmarks', 'activity_logs']
 for app in LOCAL_APPS:
     if importlib.util.find_spec(app) is not None:
         INSTALLED_APPS.append(app)
@@ -151,3 +151,15 @@ REST_FRAMEWORK = {
         'rest_framework_simplejwt.authentication.JWTAuthentication',
     ),
 }
+
+# Cloudinary configuration for file uploads
+import cloudinary
+import cloudinary.uploader
+import cloudinary.api
+import os
+
+cloudinary.config(
+    cloud_name=os.getenv('CLOUDINARY_CLOUD_NAME', 'your-cloud-name'),
+    api_key=os.getenv('CLOUDINARY_API_KEY', 'your-api-key'),
+    api_secret=os.getenv('CLOUDINARY_API_SECRET', 'your-api-secret'),
+)

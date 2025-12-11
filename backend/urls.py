@@ -28,4 +28,6 @@ urlpatterns = [
     path('api/search/', include('search.urls')),
     path('api/stats/', include('stats.urls')),
     path('api/admin-dashboard/', include('admin_dashboard.urls')),
+    path('api/bookmarks/', include('bookmarks.urls')),
+    path('api/activity-logs/', include('activity_logs.urls')),
 ]

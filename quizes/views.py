@@ -2,6 +2,11 @@ from rest_framework import generics, permissions, status
 from rest_framework.response import Response
 from django.apps import apps
 
+try:
+    from activity_logs.utils import log_activity
+except ImportError:
+    log_activity = lambda *args, **kwargs: None  # fallback no-op
+
 
 # Instructor: create quiz
 class CreateQuizView(generics.CreateAPIView):
@@ -24,6 +29,8 @@ class CreateQuizView(generics.CreateAPIView):
             user=quiz.course.instructor,
             message=f"New quiz '{quiz.title}' added to {quiz.course.title}"
         )
+        # log activity
+        log_activity(self.request.user, 'quiz_created', f"Created quiz '{quiz.title}' in {quiz.course.title}")
 
 
 # Instructor: add questions to quiz
@@ -126,6 +133,9 @@ class TakeQuizView(generics.CreateAPIView):
             )
         except Exception:
             pass
+
+        # log activity
+        log_activity(request.user, 'quiz_attempt', f"Attempted quiz {quiz.title} and scored {score}/{quiz.questions.count()}")
 
         return Response({
             "message": "Quiz submitted",
