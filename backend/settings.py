@@ -141,9 +141,14 @@ DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 AUTH_USER_MODEL = 'users.User'
 
 # CORS configuration (development)
-CORS_ALLOWED_ORIGINS = [
-    "http://localhost:5173",  # Vite React default
-]
+# Allow all origins in development to simplify frontend <-> backend during local testing.
+# WARNING: do NOT enable this in production.
+CORS_ALLOW_ALL_ORIGINS = True
+
+# If you prefer to restrict to specific origins, use CORS_ALLOWED_ORIGINS instead:
+# CORS_ALLOWED_ORIGINS = [
+#     "http://localhost:5173",  # Vite React default
+# ]
 
 # Minimal REST framework defaults (adjust for production)
 REST_FRAMEWORK = {

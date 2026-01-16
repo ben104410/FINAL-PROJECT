@@ -16,10 +16,17 @@ Including another URLconf
 """
 from django.contrib import admin
 from django.urls import path, include
+from users.views import RegisterView
+from rest_framework_simplejwt.views import TokenObtainPairView
 
 urlpatterns = [
     path('admin/', admin.site.urls),
     path('api/users/', include('users.urls')),
+    # Expose authentication endpoints under /api/auth/ for frontend compatibility
+    path('api/auth/', include('users.urls')),
+    # Explicit auth endpoints (also available via users.urls)
+    path('api/auth/login/', TokenObtainPairView.as_view(), name='auth_login'),
+    path('api/auth/register/', RegisterView.as_view(), name='auth_register'),
     path('api/courses/', include('courses.urls')),
     path('api/quizes/', include('quizes.urls')),
     path('api/analytics/', include('analytics.urls')),
